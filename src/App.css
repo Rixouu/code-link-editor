@@ -36,3 +36,63 @@
     transform: rotate(360deg);
   }
 }
+
+
+.prism-code {
+  background-color: transparent !important;
+}
+
+.token.tag,
+.token.attr-name,
+.token.namespace,
+.token.deleted {
+  color: #e2777a;
+}
+
+.token.attr-value,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #7ec699;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #67cdcc;
+}
+
+.token.selector,
+.token.atrule,
+.token.keyword,
+.token.class-name {
+  color: #cc99cd;
+}
+
+.token.function,
+.token.boolean,
+.token.number {
+  color: #f08d49;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #ee9900;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #999;
+}
+
+.line-number {
+  display: block;
+  line-height: 1.5;
+  font-size: 12px;
+}
