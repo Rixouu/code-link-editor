@@ -1,70 +1,77 @@
-# Code Link Editor
+# Link Wizard
 
-A deeplink fetcher and editor for streamlining code management and collaboration.
-
-## Project Overview
-
-Code Link Editor is a tool designed to fetch and edit deeplinks, making it easier for developers to manage and share specific code sections or files within their projects.
+A modern web application for extracting and enhancing links, built with Next.js, TypeScript, and Supabase.
 
 ## Features
 
-- Deeplink fetching: Easily retrieve specific code sections or files using deeplinks
-- Link editing: Modify and update deeplinks as your codebase evolves
-- [Add more features as they become available]
+- Extract links from HTML content
+- Customize link parameters (UTM tags, deep links)
+- Real-time link preview and editing
+- Dark mode support
+- Responsive design
+
+## Tech Stack
+
+- [Next.js](https://nextjs.org/) with App Router
+- [TypeScript](https://www.typescriptlang.org/)
+- [React](https://reactjs.org/)
+- [Shadcn UI](https://ui.shadcn.com/)
+- [Radix UI](https://www.radix-ui.com/)
+- [Supabase](https://supabase.io/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [CodeMirror](https://codemirror.net/) for code editing
 
 ## Getting Started
 
-### Prerequisites
+1. Clone the repository
+2. Install dependencies:
 
-- Node.js (version X.X or higher)
-- npm (version X.X or higher)
-
-### Installation
-
-1. Clone the repository:
-   ```
-   git clone https://github.com/your-username/code-link-editor.git
-   ```
-
-2. Navigate to the project directory:
-   ```
-   cd code-link-editor
-   ```
-
-3. Install dependencies:
-   ```
+   ```bash
    npm install
    ```
 
-### Usage
+3. Set up environment variables (see `.env.example`)
+4. Run the development server:
 
-[Provide basic usage instructions here]
+   ```bash
+   npm run dev
+   ```
 
-## Available Scripts
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-In the project directory, you can run:
+## Project Structure
 
-### `npm start`
+- `app/`: Next.js App Router pages and layouts
+- `components/`: Reusable React components
+  - `LinkWizard.tsx`: Main component for link extraction and editing
+  - `Settings.tsx`: Component for link enhancement settings
+  - `ThemeToggle.tsx`: Dark mode toggle component
+- `lib/`: Utility functions and shared logic
+- `styles/`: Global styles and Tailwind config
+- `utils/`: Helper functions, including link extraction logic
 
-Runs the app in development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Key Features
 
-### `npm test`
+- Server-side rendering with Next.js
+- Type-safe development with TypeScript
+- Responsive UI with Tailwind CSS
+- Dark mode support
+- Real-time link extraction and preview
+- Customizable link parameters
 
-Launches the test runner in interactive watch mode.
+## Deployment
 
-### `npm run build`
-
-Builds the app for production to the `build` folder.
+Deploy on [Vercel](https://vercel.com/) for the best Next.js experience.
 
 ## Contributing
 
-[Provide guidelines for contributing to the project]
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
 ## License
 
-[Specify the license under which this project is released]
+This project is licensed under the [MIT License](LICENSE).
 
 ## Contact
 
-[Provide contact information or links for support or inquiries]
+Jonathan Rycx
+<https://www.linkedin.com/in/jonathanrycx/>
