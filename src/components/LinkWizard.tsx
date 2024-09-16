@@ -11,7 +11,7 @@ import { html } from '@codemirror/lang-html';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { Settings } from '@/components/Settings';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Link as LinkIcon, Copy as CopyIcon, RotateCcw } from "lucide-react";
+import { Link as LinkIcon, Copy as CopyIcon, RotateCcw, TrashIcon, PlusIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils";
 
@@ -71,8 +71,10 @@ export function LinkWizard() {
   const handleToggleDeeplink = (index: number) => {
     const updatedLinks = [...extractedLinks];
     if (updatedLinks[index].deeplink) {
+      // Remove deeplink
       updatedLinks[index].deeplink = '';
     } else {
+      // Add deeplink
       updatedLinks[index].deeplink = `&$deep_link=${useDeepLinks}&$follow_redirect=${followRedirects}&utm_source=${utmSource}&utm_medium=${utmMedium}&utm_campaign=${utmCampaign}`;
     }
     setExtractedLinks(updatedLinks);
@@ -233,7 +235,7 @@ export function LinkWizard() {
                       <ul className="space-y-6">
                         {extractedLinks.map((link, index) => (
                           <li key={index} className="bg-white dark:bg-gray-700 p-4 rounded-md shadow-sm">
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Short Link</label>
                                 <Input
@@ -258,25 +260,44 @@ export function LinkWizard() {
                                   />
                                 </div>
                               )}
-                              <div className="flex items-center justify-between">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Remove Deeplink</label>
-                                <Switch
-                                  checked={!link.deeplink}
-                                  onCheckedChange={() => handleToggleDeeplink(index)}
-                                />
-                              </div>
-                              {link.deeplink && (
-                                <div>
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Deeplink
+                                  </label>
+                                  <Button
+                                    onClick={() => handleToggleDeeplink(index)}
+                                    variant="outline"
+                                    size="sm"
+                                    className={cn(
+                                      "transition-colors",
+                                      link.deeplink 
+                                        ? "bg-red-50 hover:bg-red-100 text-red-600 border-red-200 hover:border-red-300" 
+                                        : "bg-green-50 hover:bg-green-100 text-green-600 border-green-200 hover:border-green-300"
+                                    )}
+                                  >
+                                    {link.deeplink ? (
+                                      <>
+                                        <TrashIcon className="w-4 h-4 mr-1" />
+                                        Remove
+                                      </>
+                                    ) : (
+                                      <>
+                                        <PlusIcon className="w-4 h-4 mr-1" />
+                                        Add
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                                
+                                {link.deeplink && (
                                   <Input
                                     value={link.deeplink}
                                     onChange={(e) => handleUpdateLink(index, 'deeplink', e.target.value)}
-                                    className={cn(
-                                      "bg-gray-50 dark:bg-gray-600 text-black dark:text-white",
-                                      "border-0 focus:ring-0"
-                                    )}
+                                    className="w-full bg-gray-50 dark:bg-gray-600 text-black dark:text-white border border-gray-200 dark:border-gray-500 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                                   />
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </div>
                           </li>
                         ))}
