@@ -63,6 +63,27 @@ A modern web application for extracting and enhancing links, built with Next.js,
 
 Deploy on [Vercel](https://vercel.com/) for the best Next.js experience.
 
+## Changelog
+
+### [0.2.0] - 2023-04-15
+
+#### Added
+
+- Improved switch UI in Settings component for better visibility
+- Red/Green color scheme for on/off states in switches
+- Enhanced error handling in link extraction process
+- Loading state for "Extract Links" button
+
+#### Changed
+
+- Updated extracted links section UI for better readability in dark mode
+- Refined Settings component layout and styling
+- Improved contrast and visibility of UI elements in dark mode
+
+#### Fixed
+
+- Switch visibility issues in light and dark modes
+
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.

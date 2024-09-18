@@ -12,11 +12,9 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import { Settings } from '@/components/Settings';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Link as LinkIcon, Copy as CopyIcon, RotateCcw, TrashIcon, PlusIcon } from "lucide-react";
-import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils";
 
 type LinkField = 'mainLink' | 'brazeParam' | 'deeplink';
-
 
 export function LinkWizard() {
   const { toast } = useToast();
@@ -44,7 +42,13 @@ export function LinkWizard() {
   const handleExtractLinks = () => {
     setIsLoading(true);
     try {
+      if (!originalContent.trim()) {
+        throw new Error("Please enter some content before extracting links.");
+      }
       const links = extractLinks(originalContent);
+      if (links.length === 0) {
+        throw new Error("No links found in the provided content.");
+      }
       setExtractedLinks(links);
       setUpdatedContent(originalContent);
       toast({
@@ -55,7 +59,7 @@ export function LinkWizard() {
       console.error('Error extracting links:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
+        description: error instanceof Error ? error.message : "An unknown error occurred while extracting links.",
       });
     } finally {
       setIsLoading(false);
@@ -203,8 +207,20 @@ export function LinkWizard() {
                     className="bg-black hover:bg-gray-800 text-white"
                     disabled={isLoading}
                   >
-                    <LinkIcon className="mr-2 h-4 w-4" />
-                    {isLoading ? 'Extracting...' : 'Extract Links'}
+                    {isLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Extracting...
+                      </>
+                    ) : (
+                      <>
+                        <LinkIcon className="mr-2 h-4 w-4" />
+                        Extract Links
+                      </>
+                    )}
                   </Button>
                   <Button
                     onClick={handleCopyUpdatedContent}
@@ -230,21 +246,18 @@ export function LinkWizard() {
                     <LinkIcon className="w-5 h-5 mr-2" />
                     Extracted Links
                   </h2>
-                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md border dark:border-gray-700">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md border border-gray-200 dark:border-gray-700">
                     {extractedLinks.length > 0 ? (
                       <ul className="space-y-6">
                         {extractedLinks.map((link, index) => (
-                          <li key={index} className="bg-white dark:bg-gray-700 p-4 rounded-md shadow-sm">
+                          <li key={index} className="bg-white dark:bg-gray-900 p-4 rounded-md shadow-sm border border-gray-200 dark:border-gray-700">
                             <div className="space-y-4">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Short Link</label>
                                 <Input
                                   value={link.mainLink}
                                   onChange={(e) => handleUpdateLink(index, 'mainLink', e.target.value)}
-                                  className={cn(
-                                    "bg-gray-50 dark:bg-gray-600 text-black dark:text-white",
-                                    "border-0 focus:ring-0"
-                                  )}
+                                  className="bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                                 />
                               </div>
                               {link.brazeParam && (
@@ -253,15 +266,12 @@ export function LinkWizard() {
                                   <Input
                                     value={link.brazeParam}
                                     readOnly
-                                    className={cn(
-                                      "bg-gray-50 dark:bg-gray-600 text-gray-500 dark:text-gray-400",
-                                      "border-0 focus:ring-0"
-                                    )}
+                                    className="bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600"
                                   />
                                 </div>
                               )}
                               <div className="space-y-2">
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between space-x-2">
                                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Deeplink
                                   </label>
@@ -272,29 +282,18 @@ export function LinkWizard() {
                                     className={cn(
                                       "transition-colors",
                                       link.deeplink 
-                                        ? "bg-red-50 hover:bg-red-100 text-red-600 border-red-200 hover:border-red-300" 
-                                        : "bg-green-50 hover:bg-green-100 text-green-600 border-green-200 hover:border-green-300"
+                                        ? "bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 text-red-600 dark:text-red-300 border-red-200 dark:border-red-700 hover:border-red-300 dark:hover:border-red-600" 
+                                        : "bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 text-green-600 dark:text-green-300 border-green-200 dark:border-green-700 hover:border-green-300 dark:hover:border-green-600"
                                     )}
                                   >
-                                    {link.deeplink ? (
-                                      <>
-                                        <TrashIcon className="w-4 h-4 mr-1" />
-                                        Remove
-                                      </>
-                                    ) : (
-                                      <>
-                                        <PlusIcon className="w-4 h-4 mr-1" />
-                                        Add
-                                      </>
-                                    )}
+                                    {link.deeplink ? "Remove" : "Add"}
                                   </Button>
                                 </div>
-                                
                                 {link.deeplink && (
                                   <Input
                                     value={link.deeplink}
                                     onChange={(e) => handleUpdateLink(index, 'deeplink', e.target.value)}
-                                    className="w-full bg-gray-50 dark:bg-gray-600 text-black dark:text-white border border-gray-200 dark:border-gray-500 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                                    className="w-full mt-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                                   />
                                 )}
                               </div>
