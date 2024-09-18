@@ -118,56 +118,58 @@ export function LinkWizard() {
   }, [extractedLinks, originalContent]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800 p-8">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800 p-4 sm:p-8">
       <div className="w-full max-w-7xl bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden">
-        <div className="p-6 space-y-4">
-          <header className="flex justify-between items-center">
+        <div className="p-4 sm:p-6 space-y-4">
+          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold flex items-center text-gray-900 dark:text-white">
-                <svg className="w-8 h-8 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <h1 className="text-2xl sm:text-3xl font-bold flex items-center text-gray-900 dark:text-white">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 Link Wizard
               </h1>
-              <p className="text-base text-gray-500 dark:text-gray-400">Extract links from your content in seconds.</p>
+              <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">Extract links from your content in seconds.</p>
             </div>
             <ThemeToggle />
           </header>
         </div>
 
-        <div className="p-8">
+        <div className="p-4 sm:p-8">
           <Tabs defaultValue="editor" className="space-y-4">
-            <TabsList className="flex w-full bg-white dark:bg-gray-800 p-1 rounded-lg shadow-sm">
-              <TabsTrigger
-                value="editor"
+            <TabsList className="flex w-full bg-gray-200 dark:bg-gray-700 p-1 rounded-lg shadow-sm">
+              <TabsTrigger 
+                value="editor" 
                 className={cn(
-                  "flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all",
-                  "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-black dark:focus:ring-white",
-                  "data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700",
-                  "data-[state=inactive]:text-gray-500 dark:data-[state=inactive]:text-gray-400",
-                  "data-[state=inactive]:hover:bg-gray-50 dark:data-[state=inactive]:hover:bg-gray-600"
+                  "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
+                  "data-[state=active]:bg-white data-[state=active]:text-black",
+                  "data-[state=active]:dark:bg-gray-800 data-[state=active]:dark:text-white",
+                  "data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600",
+                  "data-[state=inactive]:dark:text-gray-300",
+                  "hover:bg-gray-100 dark:hover:bg-gray-600"
                 )}
               >
                 Link Editor
               </TabsTrigger>
-              <TabsTrigger
-                value="settings"
+              <TabsTrigger 
+                value="settings" 
                 className={cn(
-                  "flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all",
-                  "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-black dark:focus:ring-white",
-                  "data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700",
-                  "data-[state=inactive]:text-gray-500 dark:data-[state=inactive]:text-gray-400",
-                  "data-[state=inactive]:hover:bg-gray-50 dark:data-[state=inactive]:hover:bg-gray-600"
+                  "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
+                  "data-[state=active]:bg-white data-[state=active]:text-black",
+                  "data-[state=active]:dark:bg-gray-800 data-[state=active]:dark:text-white",
+                  "data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600",
+                  "data-[state=inactive]:dark:text-gray-300",
+                  "hover:bg-gray-100 dark:hover:bg-gray-600"
                 )}
               >
                 Settings
               </TabsTrigger>
             </TabsList>
             <TabsContent value="editor">
-              <div className="space-y-8">
-                <div className="flex space-x-4">
-                  <div className="w-1/2 space-y-3">
+              <div className="space-y-6 sm:space-y-8">
+                <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
+                  <div className="w-full sm:w-1/2 space-y-3">
                     <h2 className="text-lg font-medium flex items-center text-gray-900 dark:text-white">
                       <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -182,7 +184,7 @@ export function LinkWizard() {
                       />
                     </div>
                   </div>
-                  <div className="w-1/2 space-y-3">
+                  <div className="w-full sm:w-1/2 space-y-3">
                     <h2 className="text-lg font-medium flex items-center text-gray-900 dark:text-white">
                       <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -199,12 +201,12 @@ export function LinkWizard() {
                     </div>
                   </div>
                 </div>
-                <div className="flex space-x-2 mt-4">
+                <div className="flex flex-wrap gap-2 mt-4">
                   <Button
                     onClick={handleExtractLinks}
                     variant="default"
                     size="lg"
-                    className="bg-black hover:bg-gray-800 text-white"
+                    className="bg-black hover:bg-gray-800 text-white w-full sm:w-auto"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -226,7 +228,7 @@ export function LinkWizard() {
                     onClick={handleCopyUpdatedContent}
                     variant="outline"
                     size="lg"
-                    className="bg-white hover:bg-gray-100 text-black border-gray-300"
+                    className="bg-white hover:bg-gray-100 text-black border-gray-300 w-full sm:w-auto"
                   >
                     <CopyIcon className="mr-2 h-4 w-4" />
                     Copy Enhanced HTML
@@ -235,7 +237,7 @@ export function LinkWizard() {
                     onClick={handleReset}
                     variant="default"
                     size="lg"
-                    className="bg-red-500 hover:bg-red-600 text-white"
+                    className="bg-red-500 hover:bg-red-600 text-white w-full sm:w-auto"
                   >
                     <RotateCcw className="mr-2 h-4 w-4" />
                     Reset
