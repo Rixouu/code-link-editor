@@ -7,8 +7,8 @@ A modern web application for extracting and enhancing links, built with Next.js,
 - Extract links from HTML content
 - Customize link parameters (UTM tags, deep links)
 - Real-time link preview and editing
-- Dark mode support
 - Responsive design
+- Performance optimized with dynamic imports
 
 ## Tech Stack
 
@@ -45,7 +45,6 @@ A modern web application for extracting and enhancing links, built with Next.js,
 - `components/`: Reusable React components
   - `LinkWizard.tsx`: Main component for link extraction and editing
   - `Settings.tsx`: Component for link enhancement settings
-  - `ThemeToggle.tsx`: Dark mode toggle component
 - `lib/`: Utility functions and shared logic
 - `styles/`: Global styles and Tailwind config
 - `utils/`: Helper functions, including link extraction logic
@@ -55,15 +54,31 @@ A modern web application for extracting and enhancing links, built with Next.js,
 - Server-side rendering with Next.js
 - Type-safe development with TypeScript
 - Responsive UI with Tailwind CSS
-- Dark mode support
+- Code-splitting with dynamic imports for optimal loading
 - Real-time link extraction and preview
 - Customizable link parameters
+
+## Performance Optimizations
+
+- Dynamic imports for large dependencies (CodeMirror)
+- Suspense boundaries for better loading experience
+- Removed unused dark mode functionality
+- Memoized expensive computations
 
 ## Deployment
 
 Deploy on [Vercel](https://vercel.com/) for the best Next.js experience.
 
 ## Changelog
+
+### [0.3.0] - 2023-05-20
+
+#### Added
+- Performance optimizations with dynamic imports
+- Suspense boundaries for better loading experience
+
+#### Removed
+- Dark mode functionality to simplify the UI and improve performance
 
 ### [0.2.0] - 2023-04-15
 
@@ -76,13 +91,12 @@ Deploy on [Vercel](https://vercel.com/) for the best Next.js experience.
 
 #### Changed
 
-- Updated extracted links section UI for better readability in dark mode
+- Updated extracted links section UI for better readability
 - Refined Settings component layout and styling
-- Improved contrast and visibility of UI elements in dark mode
 
 #### Fixed
 
-- Switch visibility issues in light and dark modes
+- Switch visibility issues
 
 ## Contributing
 
