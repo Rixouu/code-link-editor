@@ -1,112 +1,89 @@
-# Link Wizard
+# Code Link Editor
 
-A modern web application for extracting and enhancing links, built with Next.js, TypeScript, and Supabase.
+A small **Next.js** app for working with marketing-style HTML: paste or edit HTML in a code editor, **extract `<a href>` links**, tweak **base URL**, **Braze-style merge parameters** (`?lid={{…}}`), and **deep-link** fragments, then apply **UTM-style settings** and preview the updated markup.
+
+Built for workflows where links are embedded in email or CRM HTML and need consistent tracking parameters without hand-editing every `href`.
 
 ## Features
 
-- Extract links from HTML content
-- Customize link parameters (UTM tags, deep links)
-- Real-time link preview and editing
-- Responsive design
-- Performance optimized with dynamic imports
+- **HTML editor** — CodeMirror 6 with HTML syntax highlighting (One Dark theme), loaded on the client only to keep the first paint light.
+- **Link extraction** — Parses anchor `href` values and splits them into editable parts (main URL, query / Braze token segment, deep-link suffix).
+- **Per-link editing** — Adjust each extracted link and rebuild the document.
+- **Settings** — Toggles for deep links and redirect behavior; configurable UTM-style fields (source, medium, campaign) with basic input sanitization.
+- **Toasts** — Feedback for extract/update actions (Sonner + local toast hook).
+- **API route** — `GET /api/fetch-code?url=…` fetches remote text (for integrations); the current UI is driven by pasted HTML in the editor.
 
-## Tech Stack
+## Tech stack
 
-- [Next.js](https://nextjs.org/) with App Router
-- [TypeScript](https://www.typescriptlang.org/)
-- [React](https://reactjs.org/)
-- [Shadcn UI](https://ui.shadcn.com/)
-- [Radix UI](https://www.radix-ui.com/)
-- [Supabase](https://supabase.io/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [CodeMirror](https://codemirror.net/) for code editing
+| Area | Choice |
+|------|--------|
+| Framework | [Next.js 16](https://nextjs.org/) (App Router, Turbopack) |
+| UI | [React 19](https://react.dev/), [Tailwind CSS](https://tailwindcss.com/) |
+| Components | [shadcn/ui](https://ui.shadcn.com/) patterns, [Radix UI](https://www.radix-ui.com/) primitives |
+| Editor | [@uiw/react-codemirror](https://github.com/uiwjs/react-codemirror), `@codemirror/lang-html` |
+| Icons | [lucide-react](https://lucide.dev/) |
+| Lint | [ESLint 9](https://eslint.org/) flat config via `eslint-config-next` |
 
-## Getting Started
+There is **no database** and **no Supabase** in this project; state lives in the browser while you use the app.
 
-1. Clone the repository
-2. Install dependencies:
+## Requirements
 
-   ```bash
-   npm install
-   ```
+- **Node.js** 20.19+, 22.13+, or 24+ recommended (aligns with current ESLint ecosystem engine ranges).
+- **npm** (or use your preferred client with equivalent commands).
 
-3. Set up environment variables (see `.env.example`)
-4. Run the development server:
+## Getting started
 
-   ```bash
-   npm run dev
-   ```
+```bash
+git clone <repository-url>
+cd code-link-editor
+npm install
+npm run dev
+```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+Open [http://localhost:3000](http://localhost:3000).
 
-## Project Structure
+### Scripts
 
-- `app/`: Next.js App Router pages and layouts
-- `components/`: Reusable React components
-  - `LinkWizard.tsx`: Main component for link extraction and editing
-  - `Settings.tsx`: Component for link enhancement settings
-- `lib/`: Utility functions and shared logic
-- `styles/`: Global styles and Tailwind config
-- `utils/`: Helper functions, including link extraction logic
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Development server (Turbopack) |
+| `npm run build` | Production build |
+| `npm run start` | Start production server (after `build`) |
+| `npm run lint` | Run ESLint (`eslint .`) |
 
-## Key Features
+## Project layout
 
-- Server-side rendering with Next.js
-- Type-safe development with TypeScript
-- Responsive UI with Tailwind CSS
-- Code-splitting with dynamic imports for optimal loading
-- Real-time link extraction and preview
-- Customizable link parameters
+```
+src/
+├── app/
+│   ├── api/fetch-code/route.ts   # Optional server fetch helper
+│   ├── Editor.tsx / Preview.tsx  # App-specific views
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── globals.css
+├── components/
+│   ├── LinkWizard.tsx            # Main interactive flow
+│   ├── Settings.tsx              # Link enhancement controls
+│   └── ui/                       # shadcn-style primitives
+├── lib/utils.ts                  # `cn()` helper
+└── utils/linkUtils.ts            # Regex-based link parse/replace logic
+```
 
-## Performance Optimizations
-
-- Dynamic imports for large dependencies (CodeMirror)
-- Suspense boundaries for better loading experience
-- Removed unused dark mode functionality
-- Memoized expensive computations
+`next.config.mjs` sets `turbopack.root` to this package directory so the correct app root is used when other lockfiles exist higher in the filesystem.
 
 ## Deployment
 
-Deploy on [Vercel](https://vercel.com/) for the best Next.js experience.
+Deploy anywhere that supports Node.js and Next.js (e.g. [Vercel](https://vercel.com/)). Run `npm run build` in CI to verify type-checking and the production bundle.
 
-## Changelog
+## Security notes
 
-### [0.3.0] - 2023-05-20
-
-#### Added
-- Performance optimizations with dynamic imports
-- Suspense boundaries for better loading experience
-
-#### Removed
-- Dark mode functionality to simplify the UI and improve performance
-
-### [0.2.0] - 2023-04-15
-
-#### Added
-
-- Improved switch UI in Settings component for better visibility
-- Red/Green color scheme for on/off states in switches
-- Enhanced error handling in link extraction process
-- Loading state for "Extract Links" button
-
-#### Changed
-
-- Updated extracted links section UI for better readability
-- Refined Settings component layout and styling
-
-#### Fixed
-
-- Switch visibility issues
-
-## Contributing
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+- **`/api/fetch-code`** performs server-side `fetch` to arbitrary URLs passed in the query string. Only expose this in production if you trust callers or add your own allowlists, auth, and rate limits.
+- **`package.json`** includes an **`overrides`** entry for `dompurify` so the Monaco editor dependency tree resolves a patched version (addresses known advisory noise from nested dependencies).
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+Add a `LICENSE` file in the repository root if you want to publish terms; this README does not impose one by default.
 
-## Contact
+---
 
-Jonathan Rycx
-<https://www.linkedin.com/in/jonathanrycx/>
+Maintained by **Jonathan Rycx** — [LinkedIn](https://www.linkedin.com/in/jonathanrycx/).

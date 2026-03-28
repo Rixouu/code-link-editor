@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/useToast"
 import { extractLinks, Link } from '@/utils/linkUtils';
 import { Input } from "@/components/ui/input";
 import { Settings } from '@/components/Settings';
-import { Link as LinkIcon, Copy as CopyIcon, RotateCcw, TrashIcon, PlusIcon } from "lucide-react";
+import { Link as LinkIcon, Copy as CopyIcon, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { html } from '@codemirror/lang-html';
 import { oneDark } from '@codemirror/theme-one-dark';
