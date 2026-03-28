@@ -1,191 +1,203 @@
-'use client';
+'use client'
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react';
-import dynamic from 'next/dynamic';
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToast } from "@/components/ui/useToast"
-import { extractLinks, Link } from '@/utils/linkUtils';
-import { Input } from "@/components/ui/input";
-import { Settings } from '@/components/Settings';
-import { Link as LinkIcon, Copy as CopyIcon, RotateCcw } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { html } from '@codemirror/lang-html';
-import { oneDark } from '@codemirror/theme-one-dark';
+import React, { useState, useEffect, useMemo, Suspense } from 'react'
+import dynamic from 'next/dynamic'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useToast } from '@/components/ui/useToast'
+import { CampaignGovernancePanel } from '@/components/campaign/CampaignGovernancePanel'
+import { applyHrefsToHtml, countAnchors, extractAnchorsFromHtml } from '@/lib/campaign/html-anchors'
+import { loadPresets, savePresets } from '@/lib/campaign/preset-storage'
+import type { AnchorGovernanceRow, CampaignPreset } from '@/lib/campaign/types'
+import {
+  Link2,
+  Copy,
+  RotateCcw,
+  FileCode2,
+  LayoutList,
+  Loader2,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { html } from '@codemirror/lang-html'
+import { oneDark } from '@codemirror/theme-one-dark'
 
-// Dynamically import CodeMirror to reduce initial bundle size
-const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), { 
+const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
   ssr: false,
   loading: () => (
-    <div className="h-[300px] w-full border rounded-md bg-gray-50 flex items-center justify-center">
-      <div className="animate-pulse text-gray-400">Loading editor...</div>
+    <div className="flex h-[320px] min-h-[240px] w-full items-center justify-center bg-muted/60">
+      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+        <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
+        <span className="text-sm">Loading editor…</span>
+      </div>
     </div>
-  )
-});
-
-type LinkField = 'mainLink' | 'brazeParam' | 'deeplink';
+  ),
+})
 
 export function LinkWizard() {
-  const { toast } = useToast();
-  const [originalContent, setOriginalContent] = useState('');
-  const [updatedContent, setUpdatedContent] = useState('');
-  const [extractedLinks, setExtractedLinks] = useState<Link[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // New state for link enhancement settings
-  const [useDeepLinks, setUseDeepLinks] = useState(true);
-  const [followRedirects, setFollowRedirects] = useState(true);
-  const [utmSource, setUtmSource] = useState('email');
-  const [utmMedium, setUtmMedium] = useState('crm');
-  const [utmCampaign, setUtmCampaign] = useState('{{campaign.${name}}}');
-
-  // Memoize the editorOptions
-  const editorOptions = useMemo(() => ({
-    theme: oneDark,
-    height: '300px',
-    width: '100%',
-    style: { overflow: 'auto' },
-    extensions: [html()],
-  }), []);
-
-  const handleExtractLinks = () => {
-    setIsLoading(true);
-    try {
-      if (!originalContent.trim()) {
-        throw new Error("Please enter some content before extracting links.");
-      }
-      const links = extractLinks(originalContent);
-      if (links.length === 0) {
-        throw new Error("No links found in the provided content.");
-      }
-      setExtractedLinks(links);
-      setUpdatedContent(originalContent);
-      toast({
-        title: "Links Extracted",
-        description: `${links.length} links extracted successfully.`,
-      });
-    } catch (error) {
-      console.error('Error extracting links:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "An unknown error occurred while extracting links.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleUpdateLink = (index: number, field: LinkField, value: string) => {
-    const updatedLinks = [...extractedLinks];
-    updatedLinks[index] = { ...updatedLinks[index], [field]: value };
-    setExtractedLinks(updatedLinks);
-  };
-
-  const handleToggleDeeplink = (index: number) => {
-    const updatedLinks = [...extractedLinks];
-    if (updatedLinks[index].deeplink) {
-      // Remove deeplink
-      updatedLinks[index].deeplink = '';
-    } else {
-      // Add deeplink
-      updatedLinks[index].deeplink = `&$deep_link=${useDeepLinks}&$follow_redirect=${followRedirects}&utm_source=${utmSource}&utm_medium=${utmMedium}&utm_campaign=${utmCampaign}`;
-    }
-    setExtractedLinks(updatedLinks);
-  };
-
-  const handleReset = () => {
-    setOriginalContent('');
-    setUpdatedContent('');
-    setExtractedLinks([]);
-    toast({
-      title: "Reset",
-      description: "Content has been reset.",
-    });
-  };
-
-  const handleCopyUpdatedContent = () => {
-    navigator.clipboard.writeText(updatedContent).then(() => {
-      toast({
-        title: "Copied",
-        description: "Updated content copied to clipboard.",
-      });
-    }).catch(() => {
-      toast({
-        title: "Error",
-        description: "Failed to copy updated content.",
-      });
-    });
-  };
+  const { toast } = useToast()
+  const [mainTab, setMainTab] = useState('editor')
+  const [originalContent, setOriginalContent] = useState('')
+  const [updatedContent, setUpdatedContent] = useState('')
+  const [governanceRows, setGovernanceRows] = useState<AnchorGovernanceRow[]>([])
+  const [presets, setPresets] = useState<CampaignPreset[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    let content = originalContent;
-    extractedLinks.forEach(link => {
-      const fullUrl = `${link.mainLink}${link.brazeParam || ''}${link.deeplink}`;
-      content = content.replace(link.fullUrl, fullUrl);
-    });
-    setUpdatedContent(content);
-  }, [extractedLinks, originalContent]);
+    setPresets(loadPresets())
+  }, [])
+
+  const editorOptions = useMemo(
+    () => ({
+      theme: oneDark,
+      height: '320px',
+      width: '100%',
+      style: { overflow: 'auto' as const, minHeight: '240px' },
+      extensions: [html()],
+    }),
+    []
+  )
+
+  function handlePresetsChange(next: CampaignPreset[]) {
+    setPresets(next)
+    savePresets(next)
+  }
+
+  const handleScanLinks = () => {
+    setIsLoading(true)
+    try {
+      if (!originalContent.trim()) {
+        throw new Error('Paste HTML in the editor before scanning.')
+      }
+      const parsed = extractAnchorsFromHtml(originalContent)
+      if (parsed.length === 0) {
+        throw new Error('No <a href="…"> links found in this HTML.')
+      }
+      setGovernanceRows(
+        parsed.map((p) => ({
+          ...p,
+          finalHref: p.href,
+        }))
+      )
+      toast({
+        title: 'Links scanned',
+        description: `${parsed.length} anchor(s) found. Open Campaign governance to apply presets and validate.`,
+      })
+    } catch (error) {
+      toast({
+        title: 'Scan failed',
+        description: error instanceof Error ? error.message : 'Could not parse links.',
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleReset = () => {
+    setOriginalContent('')
+    setUpdatedContent('')
+    setGovernanceRows([])
+    toast({
+      title: 'Reset',
+      description: 'Editor and link inventory cleared.',
+    })
+  }
+
+  const handleCopyUpdatedContent = () => {
+    navigator.clipboard.writeText(updatedContent).then(
+      () => {
+        toast({
+          title: 'Copied',
+          description: 'Updated HTML copied to clipboard.',
+        })
+      },
+      () => {
+        toast({
+          title: 'Error',
+          description: 'Failed to copy.',
+        })
+      }
+    )
+  }
+
+  useEffect(() => {
+    if (governanceRows.length === 0) {
+      setUpdatedContent(originalContent)
+      return
+    }
+    const n = countAnchors(originalContent)
+    if (n !== governanceRows.length) {
+      setUpdatedContent(originalContent)
+      return
+    }
+    const hrefs = governanceRows.map((r) => r.finalHref)
+    setUpdatedContent(applyHrefsToHtml(originalContent, hrefs))
+  }, [governanceRows, originalContent])
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4 sm:p-8">
-      <div className="w-full max-w-7xl bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="p-4 sm:p-6 space-y-4">
-          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
-            <div className="space-y-2">
-              <h1 className="text-2xl sm:text-3xl font-bold flex items-center text-gray-900">
-                <svg className="w-6 h-6 sm:w-8 sm:h-8 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Link Wizard
-              </h1>
-              <p className="text-sm sm:text-base text-gray-500">Extract links from your content in seconds.</p>
-            </div>
-          </header>
-        </div>
+    <div className="min-h-screen bg-background px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="app-shell">
+        <header className="app-header">
+          <div className="app-header-inner">
+            <p className="app-kicker">Email &amp; CRM</p>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              Campaign link workspace
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-[15px]">
+              Scan HTML, apply brand presets with UTMs and deep-link flags, validate domains and required
+              parameters, then export governed markup or a CSV for your review workflow.
+            </p>
+          </div>
+        </header>
 
-        <div className="p-4 sm:p-8">
-          <Tabs defaultValue="editor" className="space-y-4">
-            <TabsList className="flex w-full bg-gray-200 p-1 rounded-lg shadow-sm">
-              <TabsTrigger 
-                value="editor" 
-                className={cn(
-                  "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
-                  "data-[state=active]:bg-white data-[state=active]:text-black",
-                  "data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600",
-                  "hover:bg-gray-100"
-                )}
-              >
-                Code Editor
+        <div className="app-main">
+          <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
+            <TabsList
+              className={cn(
+                'mb-6 grid h-auto w-full max-w-xl grid-cols-2 gap-1 p-1.5 sm:inline-flex sm:w-auto sm:max-w-none'
+              )}
+            >
+              <TabsTrigger value="editor" className="gap-2 px-4 py-2.5 sm:flex-initial">
+                <FileCode2 className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
+                HTML workspace
               </TabsTrigger>
-              <TabsTrigger 
-                value="settings" 
-                className={cn(
-                  "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
-                  "data-[state=active]:bg-white data-[state=active]:text-black",
-                  "data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-600",
-                  "hover:bg-gray-100"
-                )}
-              >
-                Settings
+              <TabsTrigger value="campaign" className="gap-2 px-4 py-2.5 sm:flex-initial">
+                <LayoutList className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
+                Governance
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="editor">
-              <div className="space-y-6 sm:space-y-8">
-                <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
-                  <div className="w-full sm:w-1/2 space-y-3">
-                    <h2 className="text-lg font-medium flex items-center text-gray-900">
-                      <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      Original Content
-                    </h2>
-                    <div className="relative overflow-hidden border rounded-md w-full max-w-full">
-                      <Suspense fallback={
-                        <div className="h-[300px] w-full bg-gray-50 flex items-center justify-center">
-                          <div className="animate-pulse text-gray-400">Loading editor...</div>
-                        </div>
-                      }>
+
+            <TabsContent value="editor" className="mt-0 space-y-6 focus-visible:outline-none">
+              <section className="app-section">
+                <div className="app-section-header">
+                  <div>
+                    <p className="app-section-eyebrow">Step 1</p>
+                    <h2 className="app-section-title">Source &amp; preview</h2>
+                    <p className="app-section-desc mt-1 max-w-2xl">
+                      Paste or edit HTML on the left. The preview updates when the number of links matches your
+                      last scan—re-scan after structural edits.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="app-pill">CodeMirror</span>
+                    <span className="app-pill">Live sync</span>
+                  </div>
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Original HTML
+                      </span>
+                    </div>
+                    <div className="app-editor-chrome">
+                      <Suspense
+                        fallback={
+                          <div className="flex h-[320px] min-h-[240px] items-center justify-center bg-muted/60">
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                          </div>
+                        }
+                      >
                         <CodeMirror
                           value={originalContent}
                           onChange={setOriginalContent}
@@ -194,49 +206,55 @@ export function LinkWizard() {
                       </Suspense>
                     </div>
                   </div>
-                  <div className="w-full sm:w-1/2 space-y-3">
-                    <h2 className="text-lg font-medium flex items-center text-gray-900">
-                      <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      Updated Content
-                    </h2>
-                    <div className="relative overflow-hidden border rounded-md w-full max-w-full">
-                      <Suspense fallback={
-                        <div className="h-[300px] w-full bg-gray-50 flex items-center justify-center">
-                          <div className="animate-pulse text-gray-400">Loading editor...</div>
-                        </div>
-                      }>
-                        <CodeMirror
-                          value={updatedContent}
-                          readOnly
-                          {...editorOptions}
-                        />
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Governed preview
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">Read-only</span>
+                    </div>
+                    <div className="app-editor-chrome opacity-[0.98] ring-1 ring-primary/10">
+                      <Suspense
+                        fallback={
+                          <div className="flex h-[320px] min-h-[240px] items-center justify-center bg-muted/60">
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                          </div>
+                        }
+                      >
+                        <CodeMirror value={updatedContent} readOnly {...editorOptions} />
                       </Suspense>
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2 mt-4">
+              </section>
+
+              <section className="app-section">
+                <div className="app-section-header border-0 pb-0">
+                  <div>
+                    <p className="app-section-eyebrow">Step 2</p>
+                    <h2 className="app-section-title">Actions</h2>
+                    <p className="app-section-desc mt-1">
+                      Scan extracts anchors in order, then use the Governance tab for presets and validation.
+                    </p>
+                  </div>
+                </div>
+                <div className="app-toolbar">
                   <Button
-                    onClick={handleExtractLinks}
-                    variant="default"
+                    onClick={handleScanLinks}
                     size="lg"
-                    className="bg-black hover:bg-gray-800 text-white w-full sm:w-auto"
                     disabled={isLoading}
+                    className="w-full sm:w-auto"
                   >
                     {isLoading ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Extracting...
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                        Scanning…
                       </>
                     ) : (
                       <>
-                        <LinkIcon className="mr-2 h-4 w-4" />
-                        Extract Links
+                        <Link2 className="mr-2 h-4 w-4" aria-hidden />
+                        Scan HTML for links
                       </>
                     )}
                   </Button>
@@ -244,105 +262,44 @@ export function LinkWizard() {
                     onClick={handleCopyUpdatedContent}
                     variant="outline"
                     size="lg"
-                    className="bg-white hover:bg-gray-100 text-black border-gray-300 w-full sm:w-auto"
+                    className="w-full border-border bg-background sm:w-auto"
                   >
-                    <CopyIcon className="mr-2 h-4 w-4" />
-                    Copy Enhanced HTML
+                    <Copy className="mr-2 h-4 w-4" aria-hidden />
+                    Copy governed HTML
                   </Button>
                   <Button
                     onClick={handleReset}
-                    variant="default"
+                    variant="destructive"
                     size="lg"
-                    className="bg-red-500 hover:bg-red-600 text-white w-full sm:w-auto"
+                    className="w-full sm:w-auto"
                   >
-                    <RotateCcw className="mr-2 h-4 w-4" />
-                    Reset
+                    <RotateCcw className="mr-2 h-4 w-4" aria-hidden />
+                    Reset all
                   </Button>
                 </div>
-                <div className="space-y-3">
-                  <h2 className="text-lg font-medium flex items-center text-gray-900">
-                    <LinkIcon className="w-5 h-5 mr-2" />
-                    Extracted Links
-                  </h2>
-                  <div className="bg-gray-100 p-4 rounded-md border border-gray-200">
-                    {extractedLinks.length > 0 ? (
-                      <ul className="space-y-6">
-                        {extractedLinks.map((link, index) => (
-                          <li key={index} className="bg-white p-4 rounded-md shadow-sm border border-gray-200">
-                            <div className="space-y-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Short Link</label>
-                                <Input
-                                  value={link.mainLink}
-                                  onChange={(e) => handleUpdateLink(index, 'mainLink', e.target.value)}
-                                  className="bg-gray-50 text-gray-900 border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                />
-                              </div>
-                              {link.brazeParam && (
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">Braze Parameter (non-editable)</label>
-                                  <Input
-                                    value={link.brazeParam}
-                                    readOnly
-                                    className="bg-gray-100 text-gray-500 border-gray-300"
-                                  />
-                                </div>
-                              )}
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between space-x-2">
-                                  <label className="text-sm font-medium text-gray-700">
-                                    Deeplink
-                                  </label>
-                                  <Button
-                                    onClick={() => handleToggleDeeplink(index)}
-                                    variant="outline"
-                                    size="sm"
-                                    className={cn(
-                                      "transition-colors",
-                                      link.deeplink 
-                                        ? "bg-red-100 hover:bg-red-200 text-red-600 border-red-200 hover:border-red-300" 
-                                        : "bg-green-100 hover:bg-green-200 text-green-600 border-green-200 hover:border-green-300"
-                                    )}
-                                  >
-                                    {link.deeplink ? "Remove" : "Add"}
-                                  </Button>
-                                </div>
-                                {link.deeplink && (
-                                  <Input
-                                    value={link.deeplink}
-                                    onChange={(e) => handleUpdateLink(index, 'deeplink', e.target.value)}
-                                    className="w-full mt-2 bg-gray-50 text-gray-900 border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                  />
-                                )}
-                              </div>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-gray-500">No links extracted yet.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
+              </section>
             </TabsContent>
-            <TabsContent value="settings">
-              <Settings
-                useDeepLinks={useDeepLinks}
-                setUseDeepLinks={setUseDeepLinks}
-                followRedirects={followRedirects}
-                setFollowRedirects={setFollowRedirects}
-                utmSource={utmSource}
-                setUtmSource={setUtmSource}
-                utmMedium={utmMedium}
-                setUtmMedium={setUtmMedium}
-                utmCampaign={utmCampaign}
-                setUtmCampaign={setUtmCampaign}
-              />
+
+            <TabsContent value="campaign" className="mt-0 focus-visible:outline-none">
+              {presets.length > 0 ? (
+                <CampaignGovernancePanel
+                  html={originalContent}
+                  rows={governanceRows}
+                  onChangeRows={setGovernanceRows}
+                  presets={presets}
+                  onPresetsChange={handlePresetsChange}
+                  onGoToWorkspace={() => setMainTab('editor')}
+                />
+              ) : (
+                <div className="app-section flex items-center gap-3 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                  Loading presets…
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>
       </div>
     </div>
-  );
+  )
 }

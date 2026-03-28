@@ -17,9 +17,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} min-h-screen`}>
         {children}
-        <Toaster position="bottom-right" />
+        <Toaster position="bottom-right" richColors closeButton />
       </body>
     </html>
   )

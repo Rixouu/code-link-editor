@@ -1,17 +1,28 @@
 # Code Link Editor
 
-A small **Next.js** app for working with marketing-style HTML: paste or edit HTML in a code editor, **extract `<a href>` links**, tweak **base URL**, **Braze-style merge parameters** (`?lid={{…}}`), and **deep-link** fragments, then apply **UTM-style settings** and preview the updated markup.
+A **Next.js** app for **email and CRM teams** who need **consistent tracking** on outbound links: paste HTML, scan anchors, apply **saved presets** (UTMs, custom query params, optional **deep-link flags** like `$deep_link` / `$follow_redirect`), **validate** domains and required parameters, then copy **governed HTML** or **export a CSV**.
 
-Built for workflows where links are embedded in email or CRM HTML and need consistent tracking parameters without hand-editing every `href`.
+## How it works (two tabs)
+
+1. **HTML workspace** — Paste or edit HTML in CodeMirror, **Scan HTML for links** to extract every `<a href>` in document order, and preview the governed output. Copy final HTML from here when you are done.
+
+2. **Governance** — A **step-oriented** flow so the main task stays obvious:
+   - Short **“How to use this tab”** intro with numbered steps and a shortcut back to the workspace if links are not loaded yet.
+   - **Apply tracking rules** — Pick the active preset, read a plain-language **“what this preset does”** summary, then **Apply preset to all links** and **Download CSV**. A single **validation status** line reports pass/fail for the current preset.
+   - **Review links** (collapsible) — Edit final URLs per row; **original href** is optional behind a checkbox to keep the table readable.
+   - **Preset library** (collapsible) — Create, duplicate, edit, or delete presets. The **full preset form** only opens when you choose an action (not shown by default).
+   - **Optional: plain-text URLs** (collapsible) — Heuristic list of `http(s)://` strings **outside** `<a>` tags for QA only.
+
+Presets are stored in **`localStorage`** (this browser only). There is **no database**; add a backend when you need shared presets or audit history.
 
 ## Features
 
-- **HTML editor** — CodeMirror 6 with HTML syntax highlighting (One Dark theme), loaded on the client only to keep the first paint light.
-- **Link extraction** — Parses anchor `href` values and splits them into editable parts (main URL, query / Braze token segment, deep-link suffix).
-- **Per-link editing** — Adjust each extracted link and rebuild the document.
-- **Settings** — Toggles for deep links and redirect behavior; configurable UTM-style fields (source, medium, campaign) with basic input sanitization.
-- **Toasts** — Feedback for extract/update actions (Sonner + local toast hook).
-- **API route** — `GET /api/fetch-code?url=…` fetches remote text (for integrations); the current UI is driven by pasted HTML in the editor.
+- **DOM-based link updates** — Uses `DOMParser` / ordered anchors so duplicate URLs and reordering do not break like naive `String.replace`.
+- **Campaign presets** — Brand/channel labels, UTM fields, custom `key=value` lines (merge tags allowed), deep-link toggles, **allowed domains**, **required query keys**.
+- **Validation** — Per-link checks against the active preset (domain allowlist, required params).
+- **CSV export** — Link inventory with validation outcome for spreadsheets or handoff.
+- **Design system** — Shared **CSS variables** (`--primary`, `--muted`, `--border`, …) in `globals.css`, utility classes (`app-shell`, `app-section`, `app-header`, …), and shadcn-style **Button** / **Input** / **Tabs** tokens in `tailwind.config.ts`.
+- **API route** — `GET /api/fetch-code?url=…` for optional server fetch (not wired in the default UI; review SSRF risk before production use).
 
 ## Tech stack
 
@@ -24,12 +35,10 @@ Built for workflows where links are embedded in email or CRM HTML and need consi
 | Icons | [lucide-react](https://lucide.dev/) |
 | Lint | [ESLint 9](https://eslint.org/) flat config via `eslint-config-next` |
 
-There is **no database** and **no Supabase** in this project; state lives in the browser while you use the app.
-
 ## Requirements
 
-- **Node.js** 20.19+, 22.13+, or 24+ recommended (aligns with current ESLint ecosystem engine ranges).
-- **npm** (or use your preferred client with equivalent commands).
+- **Node.js** 20.19+, 22.13+, or 24+ recommended.
+- **npm** (or another client with equivalent commands).
 
 ## Getting started
 
@@ -56,33 +65,35 @@ Open [http://localhost:3000](http://localhost:3000).
 ```
 src/
 ├── app/
-│   ├── api/fetch-code/route.ts   # Optional server fetch helper
-│   ├── Editor.tsx / Preview.tsx  # App-specific views
+│   ├── api/fetch-code/route.ts
+│   ├── globals.css        # design tokens + app-* layout utilities
 │   ├── layout.tsx
 │   ├── page.tsx
-│   └── globals.css
 ├── components/
-│   ├── LinkWizard.tsx            # Main interactive flow
-│   ├── Settings.tsx              # Link enhancement controls
-│   └── ui/                       # shadcn-style primitives
-├── lib/utils.ts                  # `cn()` helper
-└── utils/linkUtils.ts            # Regex-based link parse/replace logic
+│   ├── campaign/
+│   │   └── CampaignGovernancePanel.tsx
+│   ├── LinkWizard.tsx     # tabs: workspace + governance
+│   └── ui/
+├── lib/
+│   ├── campaign/          # presets, HTML anchors, apply/validate, CSV, unlinked-url scan
+│   └── utils.ts
+└── utils/linkUtils.ts     # legacy regex helpers (unused by main UI)
 ```
 
-`next.config.mjs` sets `turbopack.root` to this package directory so the correct app root is used when other lockfiles exist higher in the filesystem.
+`next.config.mjs` sets `turbopack.root` to this package when other lockfiles exist higher in the filesystem.
 
 ## Deployment
 
-Deploy anywhere that supports Node.js and Next.js (e.g. [Vercel](https://vercel.com/)). Run `npm run build` in CI to verify type-checking and the production bundle.
+Deploy on [Vercel](https://vercel.com/) or any Node host that supports Next.js. Run `npm run build` in CI.
 
 ## Security notes
 
-- **`/api/fetch-code`** performs server-side `fetch` to arbitrary URLs passed in the query string. Only expose this in production if you trust callers or add your own allowlists, auth, and rate limits.
-- **`package.json`** includes an **`overrides`** entry for `dompurify` so the Monaco editor dependency tree resolves a patched version (addresses known advisory noise from nested dependencies).
+- **`/api/fetch-code`** can trigger server-side `fetch` to arbitrary URLs—restrict, authenticate, or remove in production if unused.
+- **`package.json`** includes an **`overrides`** entry for `dompurify` (Monaco transitive dependency).
 
 ## License
 
-Add a `LICENSE` file in the repository root if you want to publish terms; this README does not impose one by default.
+Add a `LICENSE` file if you publish terms; none is bundled by default.
 
 ---
 

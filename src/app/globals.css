@@ -2,14 +2,105 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-gray-100;
+@layer base {
+  :root {
+    --background: 210 24% 97%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --muted: 210 22% 95%;
+    --muted-foreground: 215 16% 42%;
+    --border: 214 18% 88%;
+    --input: 214 18% 88%;
+    --ring: 172 55% 38%;
+    --primary: 172 58% 32%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 20% 93%;
+    --secondary-foreground: 222 40% 18%;
+    --accent: 168 42% 94%;
+    --accent-foreground: 172 58% 24%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 55% 38%;
+    --warning: 32 95% 44%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply min-h-screen bg-background text-foreground antialiased;
+  }
 }
 
-.container {
-  @apply max-w-4xl mx-auto;
-}
+@layer components {
+  .app-shell {
+    @apply mx-auto w-full max-w-7xl overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm;
+  }
 
-input, textarea {
-  @apply bg-white;
+  .app-header {
+    @apply relative border-b border-white/10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-6 py-8 text-white;
+  }
+
+  .app-header::after {
+    content: '';
+    @apply pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(45,212,191,0.12),transparent)];
+  }
+
+  .app-header-inner {
+    @apply relative z-[1];
+  }
+
+  .app-kicker {
+    @apply mb-3 inline-flex items-center gap-1.5 rounded-full border border-teal-400/25 bg-teal-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-200;
+  }
+
+  .app-main {
+    @apply bg-muted/50 p-4 sm:p-6 lg:p-8;
+  }
+
+  .app-section {
+    @apply rounded-xl border border-border bg-card p-5 shadow-sm;
+  }
+
+  .app-section-tight {
+    @apply rounded-xl border border-border bg-card p-4 shadow-sm;
+  }
+
+  .app-section-header {
+    @apply mb-4 flex flex-col gap-1 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between;
+  }
+
+  .app-section-eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-primary;
+  }
+
+  .app-section-title {
+    @apply text-base font-semibold text-foreground;
+  }
+
+  .app-section-desc {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .app-pill {
+    @apply inline-flex items-center rounded-md border border-border bg-muted/80 px-2 py-0.5 text-[11px] font-medium text-muted-foreground;
+  }
+
+  .app-select {
+    @apply w-full max-w-md rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  .app-textarea {
+    @apply w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  .app-editor-chrome {
+    @apply overflow-hidden rounded-lg border border-border shadow-inner;
+  }
+
+  .app-toolbar {
+    @apply flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-border bg-muted/40 p-3;
+  }
 }
