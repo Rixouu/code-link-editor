@@ -1,100 +1,109 @@
-# Code Link Editor
+---
 
-A **Next.js** app for **email and CRM teams** who need **consistent tracking** on outbound links: paste HTML, scan anchors, apply **saved presets** (UTMs, custom query params, optional **deep-link flags** like `$deep_link` / `$follow_redirect`), **validate** domains and required parameters, then copy **governed HTML** or **export a CSV**.
+**Code Link Editor** is a web app designed for email and CRM teams who need consistent tracking on outbound links: paste HTML, scan anchors, apply saved presets, validate domains, and export a CSV or copy governed HTML.
 
-## How it works (two tabs)
+The current product was developed and maintained by [Jonathan Rycx](https://github.com/Rixouu), focusing on robust DOM parsing and clear governance workflows.
 
-1. **HTML workspace** — Paste or edit HTML in CodeMirror, **Scan HTML for links** to extract every `<a href>` in document order, and preview the governed output. Copy final HTML from here when you are done.
+[![React 19](https://img.shields.io/badge/React-19-blue)](https://react.dev/)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38bdf8)](https://tailwindcss.com/)
+[![Radix UI](https://img.shields.io/badge/Radix_UI-Primitives-6366f1)](https://www.radix-ui.com/)
+![PWA Ready](https://img.shields.io/badge/PWA-Install%20Banner-9ca3af)
 
-2. **Governance** — A **step-oriented** flow so the main task stays obvious:
-   - Short **“How to use this tab”** intro with numbered steps and a shortcut back to the workspace if links are not loaded yet.
-   - **Apply tracking rules** — Pick the active preset, read a plain-language **“what this preset does”** summary, then **Apply preset to all links** and **Download CSV**. A single **validation status** line reports pass/fail for the current preset.
-   - **Review links** (collapsible) — Edit final URLs per row; **original href** is optional behind a checkbox to keep the table readable.
-   - **Preset library** (collapsible) — Create, duplicate, edit, or delete presets. The **full preset form** only opens when you choose an action (not shown by default).
-   - **Optional: plain-text URLs** (collapsible) — Heuristic list of `http(s)://` strings **outside** `<a>` tags for QA only.
+### 🔗 Link Governance
+- Paste or edit HTML in a robust CodeMirror workspace.
+- Scan HTML to extract every `<a href>` in document order.
+- Preview and copy the governed, modified HTML directly.
 
-Presets are stored in **`localStorage`** (this browser only). There is **no database**; add a backend when you need shared presets or audit history.
+### 📝 Campaign Presets
+- Brand/channel labels, UTM fields, custom `key=value` lines (merge tags allowed).
+- Deep-link toggles (`$deep_link` / `$follow_redirect`).
+- Defined allowed domains and required query keys.
+- Saved in `localStorage` for privacy and persistence.
 
-## Features
+### ✅ Validation & Export
+- Step-oriented governance flow.
+- Per-link checks against the active preset.
+- Validation status reporting pass/fail for current rules.
+- Downloadable CSV link inventory with validation outcomes.
 
-- **DOM-based link updates** — Uses `DOMParser` / ordered anchors so duplicate URLs and reordering do not break like naive `String.replace`.
-- **Campaign presets** — Brand/channel labels, UTM fields, custom `key=value` lines (merge tags allowed), deep-link toggles, **allowed domains**, **required query keys**.
-- **Validation** — Per-link checks against the active preset (domain allowlist, required params).
-- **CSV export** — Link inventory with validation outcome for spreadsheets or handoff.
-- **Design system** — Shared **CSS variables** (`--primary`, `--muted`, `--border`, …) in `globals.css`, utility classes (`app-shell`, `app-section`, `app-header`, …), and shadcn-style **Button** / **Input** / **Tabs** tokens in `tailwind.config.ts`.
-- **API route** — `GET /api/fetch-code?url=…` for optional server fetch (not wired in the default UI; review SSRF risk before production use).
+### Frontend
+- **React 19**
+- **Next.js 16** (App Router, Turbopack)
+- **Tailwind CSS** (design tokens and utility classes)
+- **shadcn/ui** patterns & Radix UI primitives
 
-## Tech stack
+### Prerequisites
+- **Node.js** 20.19+, 22.13+, or 24+
+- **npm** (or equivalent)
 
-| Area | Choice |
-|------|--------|
-| Framework | [Next.js 16](https://nextjs.org/) (App Router, Turbopack) |
-| UI | [React 19](https://react.dev/), [Tailwind CSS](https://tailwindcss.com/) |
-| Components | [shadcn/ui](https://ui.shadcn.com/) patterns, [Radix UI](https://www.radix-ui.com/) primitives |
-| Editor | [@uiw/react-codemirror](https://github.com/uiwjs/react-codemirror), `@codemirror/lang-html` |
-| Icons | [lucide-react](https://lucide.dev/) |
-| Lint | [ESLint 9](https://eslint.org/) flat config via `eslint-config-next` |
-
-## Requirements
-
-- **Node.js** 20.19+, 22.13+, or 24+ recommended.
-- **npm** (or another client with equivalent commands).
-
-## Getting started
-
+### Installation
 ```bash
-git clone <repository-url>
-cd code-link-editor
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Default dev URL: **http://localhost:3000**
 
-### Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Development server (Turbopack) |
-| `npm run build` | Production build |
-| `npm run start` | Start production server (after `build`) |
-| `npm run lint` | Run ESLint (`eslint .`) |
-
-## Project layout
-
-```
+### Project Layout
+```txt
 src/
 ├── app/
-│   ├── api/fetch-code/route.ts
-│   ├── globals.css        # design tokens + app-* layout utilities
+│   ├── api/fetch-code/route.ts  # Optional server fetch
+│   ├── globals.css              # Design tokens & utilities
 │   ├── layout.tsx
-│   ├── page.tsx
+│   └── page.tsx
 ├── components/
-│   ├── campaign/
-│   │   └── CampaignGovernancePanel.tsx
-│   ├── LinkWizard.tsx     # tabs: workspace + governance
-│   └── ui/
-├── lib/
-│   ├── campaign/          # presets, HTML anchors, apply/validate, CSV, unlinked-url scan
-│   └── utils.ts
-└── utils/linkUtils.ts     # legacy regex helpers (unused by main UI)
+│   ├── campaign/                # Governance panels & logic
+│   ├── LinkWizard.tsx           # Main workspace and tabs
+│   └── ui/                      # shadcn/ui components
+└── lib/
+    ├── campaign/                # Presets, validation, CSV logic
+    └── utils.ts                 # Tailwind utilities
 ```
 
-`next.config.mjs` sets `turbopack.root` to this package when other lockfiles exist higher in the filesystem.
+### Development
+```bash
+npm run dev              # Next.js dev server (Turbopack)
+```
 
-## Deployment
+### Build / Run
+```bash
+npm run build            # Production build
+npm run start            # Start production server
+```
 
-Deploy on [Vercel](https://vercel.com/) or any Node host that supports Next.js. Run `npm run build` in CI.
+### Code Quality
+```bash
+npm run lint             # ESLint flat config
+```
 
-## Security notes
+### 📱 PWA & Install UX
+- Dedicated install banner component for seamless installation.
+- Clean mobile optimization and native app feel.
 
-- **`/api/fetch-code`** can trigger server-side `fetch` to arbitrary URLs—restrict, authenticate, or remove in production if unused.
-- **`package.json`** includes an **`overrides`** entry for `dompurify` (Monaco transitive dependency).
+## 📊 DOM-Based Updates
+- Uses `DOMParser` and ordered anchors.
+- Safe from regex replacements that break naive `String.replace` approaches.
 
-## License
+## 🔐 Security Notes
+- `/api/fetch-code` triggers server-side `fetch`. Restrict or remove in production if unused.
+- The app operates primarily client-side with no database, ensuring user data privacy.
 
+## 🚀 Deployment
+```bash
+npm run build
+npm run start
+```
+
+Deploy on Vercel or any Node host that supports Next.js.
+
+## 📄 License
 Add a `LICENSE` file if you publish terms; none is bundled by default.
+
+## 👥 Team
+- **Jonathan Rycx** — Lead Developer — [LinkedIn](https://www.linkedin.com/in/jonathanrycx/)
 
 ---
 
-Maintained by **Jonathan Rycx** — [LinkedIn](https://www.linkedin.com/in/jonathanrycx/).
+**Built with ❤️ for consistent, reliable email links.**
