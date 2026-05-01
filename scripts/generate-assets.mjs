@@ -40,7 +40,6 @@ async function generateAssets() {
   }
 
   const baseImage = sharp(ICON_SOURCE);
-  const metadata = await baseImage.metadata();
   
   // 1. Generate Favicon
   console.log('Generating favicon...');

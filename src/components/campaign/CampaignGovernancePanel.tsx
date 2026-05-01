@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,8 +8,6 @@ import { applyPresetToHref } from '@/lib/campaign/apply-preset'
 import { buildLinksCsv } from '@/lib/campaign/csv-export'
 import {
   deletePreset,
-  loadActivePresetId,
-  saveActivePresetId,
   upsertPreset,
 } from '@/lib/campaign/preset-storage'
 import type { AnchorGovernanceRow, CampaignPreset } from '@/lib/campaign/types'
@@ -35,6 +33,8 @@ interface CampaignGovernancePanelProps {
   onChangeRows: (rows: AnchorGovernanceRow[]) => void
   presets: CampaignPreset[]
   onPresetsChange: (presets: CampaignPreset[]) => void
+  activePresetId: string
+  onActivePresetIdChange: (id: string) => void
   /** Switch parent tab to HTML workspace (e.g. when links are missing). */
   onGoToWorkspace: () => void
 }
@@ -119,7 +119,7 @@ function CollapsibleBlock({
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-start justify-between gap-3 rounded-lg text-left transition-colors hover:bg-muted/40 -m-1 p-1"
-        aria-expanded={open}
+        aria-expanded={open ? 'true' : 'false'}
       >
         <div className="min-w-0">
           <h2 className="text-base font-semibold text-foreground">{title}</h2>
@@ -347,20 +347,23 @@ export function CampaignGovernancePanel({
   onChangeRows,
   presets,
   onPresetsChange,
+  activePresetId,
+  onActivePresetIdChange,
   onGoToWorkspace,
 }: CampaignGovernancePanelProps) {
-  const [activeId, setActiveId] = useState<string>(() => {
-    const saved = typeof window !== 'undefined' ? loadActivePresetId() : null
-    if (saved && presets.some((p) => p.id === saved)) return saved
-    return presets[0]?.id ?? ''
-  })
   const [editingPreset, setEditingPreset] = useState<CampaignPreset | null>(null)
   const [customKeysText, setCustomKeysText] = useState('')
   const [showOriginalHref, setShowOriginalHref] = useState(false)
 
+  useEffect(() => {
+    if (presets.length === 0) return
+    if (presets.some((p) => p.id === activePresetId)) return
+    onActivePresetIdChange(presets[0].id)
+  }, [activePresetId, onActivePresetIdChange, presets])
+
   const activePreset = useMemo(
-    () => presets.find((p) => p.id === activeId) ?? presets[0],
-    [presets, activeId]
+    () => presets.find((p) => p.id === activePresetId) ?? presets[0],
+    [presets, activePresetId]
   )
 
   const validations = useMemo(() => {
@@ -376,13 +379,8 @@ export function CampaignGovernancePanel({
   const invalidCount = validations.filter((v) => !v.ok).length
   const hasRows = rows.length > 0
 
-  function persistActiveId(id: string) {
-    setActiveId(id)
-    saveActivePresetId(id)
-  }
-
   function handleSelectPreset(id: string) {
-    persistActiveId(id)
+    onActivePresetIdChange(id)
   }
 
   function handleApplyPresetToAll() {
@@ -435,7 +433,7 @@ export function CampaignGovernancePanel({
     const next: CampaignPreset = { ...editingPreset, customParams: custom }
     const isNew = !presets.some((p) => p.id === next.id)
     onPresetsChange(upsertPreset(presets, next))
-    if (isNew) persistActiveId(next.id)
+    if (isNew) onActivePresetIdChange(next.id)
     closeEditor()
   }
 
@@ -443,7 +441,7 @@ export function CampaignGovernancePanel({
     if (!confirm('Delete this preset? This cannot be undone.')) return
     const list = deletePreset(presets, id)
     onPresetsChange(list)
-    if (id === activeId && list[0]) persistActiveId(list[0].id)
+    if (id === activePresetId && list[0]) onActivePresetIdChange(list[0].id)
     if (editingPreset?.id === id) closeEditor()
   }
 
@@ -457,7 +455,7 @@ export function CampaignGovernancePanel({
       name: `${p.name} (copy)`,
     }
     onPresetsChange([...presets, copy])
-    persistActiveId(copy.id)
+    onActivePresetIdChange(copy.id)
     closeEditor()
   }
 
@@ -537,8 +535,9 @@ export function CampaignGovernancePanel({
           <select
             id="preset-select"
             className="app-select max-w-full sm:max-w-lg"
-            value={activeId}
+            value={activePresetId}
             onChange={(e) => handleSelectPreset(e.target.value)}
+            aria-label="Active preset"
           >
             {presets.map((p) => (
               <option key={p.id} value={p.id}>

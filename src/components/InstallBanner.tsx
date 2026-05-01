@@ -4,54 +4,72 @@ import { useState, useEffect } from 'react';
 import { X, Download, Share } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export function InstallBanner() {
-  const [showBanner, setShowBanner] = useState(false);
-  const [platform, setPlatform] = useState<'ios' | 'android' | 'other' | null>(null);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+type Platform = 'ios' | 'android' | 'other' | null;
 
-  useEffect(() => {
-    // Detect platform
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+};
+
+export function InstallBanner() {
+  const [platform] = useState<Platform>(() => {
+    if (typeof window === 'undefined') return null;
+    const ua = window.navigator.userAgent.toLowerCase();
+    if (/iphone|ipad|ipod/.test(ua)) return 'ios';
+    if (/android/.test(ua)) return 'android';
+    return 'other';
+  });
+
+  const [showBanner, setShowBanner] = useState(() => {
+    if (typeof window === 'undefined') return false;
     const ua = window.navigator.userAgent.toLowerCase();
     const isIOS = /iphone|ipad|ipod/.test(ua);
-    const isAndroid = /android/.test(ua);
-    
-    // Check if already in standalone mode
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
-      || (window.navigator as any).standalone 
-      || document.referrer.includes('android-app://');
+    const nav = window.navigator as Navigator & { standalone?: boolean };
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      Boolean(nav.standalone) ||
+      document.referrer.includes('android-app://');
+    if (isStandalone) return false;
+    if (!isIOS) return false;
+    try {
+      const hidden = sessionStorage.getItem('pwa-banner-hidden');
+      return !hidden;
+    } catch {
+      return false;
+    }
+  });
 
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const nav = window.navigator as Navigator & { standalone?: boolean };
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      Boolean(nav.standalone) ||
+      document.referrer.includes('android-app://');
     if (isStandalone) return;
 
-    if (isIOS) {
-      setPlatform('ios');
-      // Show banner for iOS if not shown in this session
-      const hidden = sessionStorage.getItem('pwa-banner-hidden');
-      if (!hidden) {
-        setShowBanner(true);
-      }
-    } else if (isAndroid) {
-      setPlatform('android');
-    } else {
-      setPlatform('other');
-    }
-
-    const handler = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      const hidden = sessionStorage.getItem('pwa-banner-hidden');
-      if (!hidden) {
+    const handler = (e: Event) => {
+      const evt = e as BeforeInstallPromptEvent;
+      evt.preventDefault();
+      setDeferredPrompt(evt);
+      try {
+        const hidden = sessionStorage.getItem('pwa-banner-hidden');
+        if (!hidden) setShowBanner(true);
+      } catch {
         setShowBanner(true);
       }
     };
 
-    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('beforeinstallprompt', handler as EventListener);
 
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler as EventListener);
   }, []);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
-    deferredPrompt.prompt();
+    await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
       setDeferredPrompt(null);
@@ -61,7 +79,9 @@ export function InstallBanner() {
 
   const closeBanner = () => {
     setShowBanner(false);
-    sessionStorage.setItem('pwa-banner-hidden', 'true');
+    try {
+      sessionStorage.setItem('pwa-banner-hidden', 'true');
+    } catch {}
   };
 
   if (!showBanner) return null;
@@ -103,6 +123,7 @@ export function InstallBanner() {
             
             <button 
               onClick={closeBanner}
+              aria-label="Close install banner"
               className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors"
             >
               <X className="h-4 w-4" />
