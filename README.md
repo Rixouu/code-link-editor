@@ -28,6 +28,14 @@ The current product was developed and maintained by [Jonathan Rycx](https://gith
 - Validation status reporting pass/fail for current rules.
 - Downloadable CSV link inventory with validation outcomes.
 
+### 🖥️ Desktop & 📱 Mobile UI
+
+- Desktop mirrors the `mockup/` campaign workspace layout (topbar → hero → tabs → main + sidebar).
+- Mobile is app-friendly and uses a bottom navigation page system: **Workspace / Governance / Export / Settings**.
+- Mockup references:
+  - Desktop: `mockup/campaign-desktop-light.html`
+  - Mobile: `mockup/campaign-mobile-light.html`
+
 ### Frontend
 
 - **React 19**
@@ -84,6 +92,15 @@ npm run start            # Start production server
 
 ```bash
 npm run lint             # ESLint flat config
+```
+
+### Unit Tests
+
+Unit tests focus on the pure campaign/governance utilities (UTM merging, validation rules, HTML anchor extraction, CSV export).
+
+```bash
+npm run test
+npm run test:watch
 ```
 
 ### 📱 PWA & Install UX
